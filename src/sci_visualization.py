@@ -3,7 +3,7 @@ Scientific Visualization Toolkit (SCI journal style).
 
 Publication-grade figure factory shared across the study:
 
-- Enhanced Pareto-front composite (2-D projections + 3-D front + parallel coordinates)
+- Pareto-front composite (2-D projections + 3-D front + parallel coordinates)
 - Trade-off analysis matrix (histograms / scatter with correlation annotations)
 - Decision-space analysis (driver impact, temperature regimes, variable importance)
 - Interactive Plotly dashboard
@@ -99,8 +99,8 @@ class SCIVisualizer:
                             '#937860', '#DA8BC3', '#8C8C8C', '#CCB974', '#64B5CD']
         }
 
-    def plot_enhanced_pareto_front(self, save_path: str = None):
-        """Enhanced Pareto-front composite: two 2-D projections, one 3-D front, one
+    def plot_pareto_front(self, save_path: str = None):
+        """Pareto-front composite: two 2-D projections, one 3-D front, one
         parallel-coordinates panel, with per-projection color bars."""
         if self.results is None or 'objectives' not in self.results:
             raise ValueError("No optimization results available")
@@ -383,7 +383,7 @@ class SCIVisualizer:
 
         # 4. Variable importance (mean +/- SD over repeated runs)
         target_total = np.sum(objectives, axis=1)
-        var_imp = self._compute_variable_importance_enhanced(X, target_total)
+        var_imp = self._compute_variable_importance(X, target_total)
         self.results['variable_importance'] = var_imp
 
         features = var_imp['features']
@@ -452,8 +452,8 @@ class SCIVisualizer:
 
         return summary
 
-    def _compute_variable_importance_enhanced(self, X, y):
-        """Enhanced variable importance: impurity-based and permutation importances,
+    def _compute_variable_importance(self, X, y):
+        """Variable importance: impurity-based and permutation importances,
         averaged over repeated runs; the two methods are combined by mean."""
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.inspection import permutation_importance
@@ -603,7 +603,7 @@ class SCIVisualizer:
         print(f"{'=' * 60}")
 
         plots = [
-            ('enhanced_pareto_front.png', self.plot_enhanced_pareto_front),
+            ('pareto_front.png', self.plot_pareto_front),
             ('tradeoff_analysis_matrix.png', self.plot_tradeoff_analysis_matrix),
             ('decision_space_analysis.png', self.plot_decision_space_analysis)
         ]

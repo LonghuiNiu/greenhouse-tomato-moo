@@ -73,7 +73,7 @@ the reconstructed preprocessing chain.
 
 ### `src/sci_visualization.py` (importable toolkit)
 
-Journal-style figure factory used across the study: Times-serif theming, enhanced
+Journal-style figure factory used across the study: Times-serif theming, tuned
 Pareto-front composites, decision-space analyses, trade-off matrices, and an
 interactive Plotly dashboard.
 

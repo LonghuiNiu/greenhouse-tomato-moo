@@ -63,10 +63,10 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.cm import ScalarMappable
 from matplotlib.lines import Line2D
 from sci_visualization import SCIVisualizer
-from config import SEASON_REGISTRY, ENHANCEMENT_CONFIG
+from config import SEASON_REGISTRY, AUX_CONFIG
 from data_loader import TomatoDataLoader
 from data_preprocessor import DataPreprocessor
-from models import EnhancedSurrogateModel, ModelConfig
+from models import SurrogateModel, ModelConfig
 
 SCIVisualizer()._setup_sci_style()   # reuse the main pipeline's SCI theme verbatim (Times serif / grid / sizes)
 
@@ -81,13 +81,13 @@ SHAP_CMAP = LinearSegmentedColormap.from_list(
 LOG_PATH = OUTPUT_ROOT / 'tomato_optimization.log'
 
 
-def build_aug_helper(ml_cfg: dict) -> EnhancedSurrogateModel:
+def build_aug_helper(ml_cfg: dict) -> SurrogateModel:
     """Build a surrogate shell that reuses models._augment_data verbatim.
 
     Calling the very same code path (same seed, same order) guarantees the replicated
     augmentation matches the training-time one bit-for-bit.
     """
-    return EnhancedSurrogateModel(ModelConfig(
+    return SurrogateModel(ModelConfig(
         include_rf=False, include_gbm=False, include_svm=False, include_nn=False,
         include_gp=False, include_xgb=False, include_catboost=False, include_ensemble=False,
         use_data_augmentation=True,
@@ -132,7 +132,7 @@ class SurrogateChain:
         loader.load_data(season=season)
         X_raw, _ = loader.get_features_and_targets()
         Xp = X_raw
-        if ENHANCEMENT_CONFIG.get('use_poly_features', False):
+        if AUX_CONFIG.get('use_poly_features', False):
             from sklearn.decomposition import PCA
             from sklearn.preprocessing import PolynomialFeatures
             self.poly = PolynomialFeatures(degree=2, include_bias=False,
@@ -140,7 +140,7 @@ class SurrogateChain:
             Xp = self.poly.transform(X_raw)
             self.poly_scaler = StandardScaler().fit(Xp)
             Xp = self.poly_scaler.transform(Xp)
-            self.pca = PCA(n_components=ENHANCEMENT_CONFIG['pca_variance_threshold']).fit(Xp)
+            self.pca = PCA(n_components=AUX_CONFIG['pca_variance_threshold']).fit(Xp)
             Xp = self.pca.transform(Xp)
         self.feature_scaler = MinMaxScaler().fit(Xp)
         self.X_mm = self.feature_scaler.transform(Xp)
@@ -212,7 +212,7 @@ def rebuild_global_y() -> dict:
         loader = TomatoDataLoader()
         loader.load_data(season=season)
         _, targets = loader.get_features_and_targets()
-        pre = DataPreprocessor(variance_threshold=ENHANCEMENT_CONFIG['pca_variance_threshold'])
+        pre = DataPreprocessor(variance_threshold=AUX_CONFIG['pca_variance_threshold'])
         pre.stage_info = loader.stage_info
         pre.base_info = loader.base_info
         pt = pre.preprocess_targets(targets, target_columns=loader.target_columns)
@@ -499,7 +499,7 @@ def run_season(season: str, targets: list, global_y: dict) -> dict:
         top = pickle.load(fh)
     ml_cfg = top.get('ml_config', {})
     weight_method = ml_cfg.get('ensemble_weight_method',
-                               ENHANCEMENT_CONFIG.get('ensemble_weight_method', 'mixed'))
+                               AUX_CONFIG.get('ensemble_weight_method', 'mixed'))
 
     logger.info(f'===== {season} =====')
     n_anchor, r2_anchor = parse_log_anchor(season)   # augmentation regime adjudicated from the runtime log
